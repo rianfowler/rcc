@@ -28,6 +28,7 @@ func (m *Rcc) BuildNodeApp(
 ) (int, error) {
 	ctr := dag.Container().
 		From("buildpacksio/pack:latest").
+		WithUnixSocket("/var/run/docker.sock", docker).
 		WithDirectory("/app", source).
 		WithExec([]string{
 			"pack", "build", "demo-node-app",
