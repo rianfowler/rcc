@@ -36,6 +36,7 @@ func (m *Rcc) BuildNodeApp(
 			"--builder", "paketobuildpacks/builder-jammy-base",
 			"--buildpack", "paketo-buildpacks/nodejs",
 			"--env", "BP_DISABLE_SBOM=true",
+			"--creation-time", "now",
 			// any other --env flags here too
 		})
 
