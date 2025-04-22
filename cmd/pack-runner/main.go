@@ -55,6 +55,7 @@ func main() {
 			"--builder", "paketobuildpacks/builder-jammy-base",
 			"--env", "BP_NODE_VERSION=18",
 			"--env", "BP_DISABLE_SBOM=true",
+			"--creation-time", "now",
 		},
 	}
 
