@@ -1,0 +1,108 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+project_name: rcc
+
+builds:
+  # Build for macOS AMD64
+  - id: darwin_amd64
+    main: main.go
+    goos:
+      - darwin
+    goarch:
+      - amd64
+    binary: rcc
+    env:
+      - CGO_ENABLED=1
+
+  # Build for macOS ARM (Apple Silicon)
+  - id: darwin_arm64
+    main: main.go
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    binary: rcc
+    env:
+      - CGO_ENABLED=1
+
+  # Build for Linux AMD64 (used for CLI distribution and Docker)
+  - id: linux_amd64
+    main: main.go
+    goos:
+      - linux
+    goarch:
+      - amd64
+    binary: rcc
+    env:
+      - CGO_ENABLED=0
+
+  # Build for Linux ARM64 (used for CLI distribution and Docker)
+  - id: linux_arm64
+    main: main.go
+    goos:
+      - linux
+    goarch:
+      - arm64
+    binary: rcc
+    env:
+      - CGO_ENABLED=0
+
+  # Build for Windows AMD64
+  - id: windows_amd64
+    main: main.go
+    goos:
+      - windows
+    goarch:
+      - amd64
+    binary: rcc.exe
+    env:
+      - CGO_ENABLED=0
+
+  # Build for Windows ARM (Windows on ARM64)
+  - id: windows_arm64
+    main: main.go
+    goos:
+      - windows
+    goarch:
+      - arm64
+    binary: rcc.exe
+    env:
+      - CGO_ENABLED=0
+
+dockers:
+  - image_templates:
+      - "rianfowler/rcc:{{ .Tag }}"
+      - "rianfowler/rcc:latest"
+    dockerfile: Dockerfile
+
+signs:
+  - artifacts: checksum
+    cmd: gpg2
+    args:
+      - "--batch"
+      - "-u"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+brews:
+  - name: rcc
+    description: "A CLI tool for doing X, Y, and Z."
+    homepage: "https://github.com/rianfowler/rcc"
+    license: "MIT"
+    test: |
+      system "#{bin}/rcc", "--help"
+    commit_author:
+      name: "goreleaserbot"
+      email: "bot@goreleaser.com"
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    directory: Formula
+    repository:
+      owner: rianfowler
+      name: homebrew-rcc
+      branch: main
+      token: "{{ .Env.GITHUB_PERSONAL_AUTH_TOKEN }}"
+      pull_request:
+        enabled: true
+        draft: true
