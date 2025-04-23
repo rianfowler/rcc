@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/spf13/cobra"
@@ -20,9 +20,16 @@ func newPackBuildCmd() *cobra.Command {
 		Use:   "pack [path]",
 		Short: "Build an application using Cloud Native Buildpacks",
 		Long: `Build an application using Cloud Native Buildpacks.
-This command uses the pack CLI tool to build your application into a container image.`,
+This command will create a container image from your application source code.`,
 		Args: cobra.ExactArgs(1),
-		RunE: runPackBuild,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			path := args[0]
+			// Validate path exists
+			if _, err := os.Stat(path); os.IsNotExist(err) {
+				return fmt.Errorf("path does not exist: %s", path)
+			}
+			return runPackBuild(cmd, args)
+		},
 	}
 
 	// Add pack-specific flags
@@ -49,10 +56,10 @@ func runPackBuild(cmd *cobra.Command, args []string) error {
 
 	// Pull the pack image if not available
 	imageName := "buildpacksio/pack:latest"
-	_, _, err = cli.ImageInspectWithRaw(context.Background(), imageName)
+	_, err = cli.ImageInspect(context.Background(), imageName)
 	if err != nil {
 		log.Printf("Pulling image %s...", imageName)
-		out, err := cli.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
+		out, err := cli.ImagePull(context.Background(), imageName, image.PullOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to pull image: %v", err)
 		}
@@ -99,7 +106,7 @@ func runPackBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	// Start the container
-	if err := cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
+	if err := cli.ContainerStart(context.Background(), resp.ID, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container: %v", err)
 	}
 
@@ -114,7 +121,7 @@ func runPackBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get the container logs
-	out, err := cli.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+	out, err := cli.ContainerLogs(context.Background(), resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
 		return fmt.Errorf("failed to get container logs: %v", err)
 	}
@@ -123,7 +130,7 @@ func runPackBuild(cmd *cobra.Command, args []string) error {
 	stdcopy.StdCopy(os.Stdout, os.Stderr, out)
 
 	// Remove the container
-	if err := cli.ContainerRemove(context.Background(), resp.ID, types.ContainerRemoveOptions{}); err != nil {
+	if err := cli.ContainerRemove(context.Background(), resp.ID, container.RemoveOptions{}); err != nil {
 		log.Printf("Warning: Failed to remove container: %v", err)
 	}
 

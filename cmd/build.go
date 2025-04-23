@@ -38,11 +38,12 @@ Examples:
   rcc build go v1.0.0`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// If no subcommand is specified and a path is provided, use pack
-			if len(args) == 1 {
-				return runPackBuild(cmd, args)
+			// If no arguments are provided, show help
+			if len(args) == 0 {
+				return cmd.Help()
 			}
-			return cmd.Help()
+			// If no subcommand is specified and a path is provided, use pack
+			return runPackBuild(cmd, args)
 		},
 	}
 
