@@ -1,0 +1,85 @@
+# .github/workflows/create-tag.yml
+name: Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Which part to bump: major, minor, or patch'
+        required: true
+        default: 'patch'
+      commit:
+        description: 'Commit hash to tag (defaults to latest commit)'
+        required: false
+        default: ''
+
+jobs:
+  version:
+    name: Determine new version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set_version.outputs.version }}
+    steps:
+      - name: Fetch latest release tag
+        id: fetch_release
+        run: |
+          echo "Fetching latest release..."
+          LATEST_TAG=$(curl -s -H "Accept: application/vnd.github+json" https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest | jq -r .tag_name)
+          echo "Latest release tag: $LATEST_TAG"
+          if [ "$LATEST_TAG" == "null" ] || [ -z "$LATEST_TAG" ]; then
+            echo "No release found. Setting baseline version to v0.0.0"
+            LATEST_TAG="v0.0.0"
+          fi
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+
+      - name: Determine new version
+        id: set_version
+        run: |
+          # Remove leading 'v' from LATEST_TAG
+          VERSION_NUM=${LATEST_TAG#v}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NUM"
+          echo "Current version: $MAJOR.$MINOR.$PATCH"
+          BUMP="${{ github.event.inputs.bump }}"
+          case "$BUMP" in
+            major)
+              NEW_MAJOR=$((MAJOR + 1))
+              NEW_MINOR=0
+              NEW_PATCH=0
+              ;;
+            minor)
+              NEW_MAJOR=$MAJOR
+              NEW_MINOR=$((MINOR + 1))
+              NEW_PATCH=0
+              ;;
+            patch)
+              NEW_MAJOR=$MAJOR
+              NEW_MINOR=$MINOR
+              NEW_PATCH=$((PATCH + 1))
+              ;;
+            *)
+              echo "Invalid bump input: $BUMP"
+              exit 1
+              ;;
+          esac
+          NEW_VERSION="v${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}"
+          echo "New version will be: ${NEW_VERSION}"
+          echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+  create_tag:
+    runs-on: ubuntu-latest
+    name: Create Tag ${{ needs.version.outputs.version }}
+    needs: version
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Tag
+        run: |
+          COMMIT="${{ github.event.inputs.commit }}"
+          if [ -z "$COMMIT" ]; then
+            COMMIT=$(git rev-parse HEAD)
+          fi
+          git tag ${{ needs.version.outputs.version }} $COMMIT
+          git push origin ${{ needs.version.outputs.version }}
