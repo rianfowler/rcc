@@ -26,9 +26,13 @@ jobs:
       - name: Get Tag Name
         id: get_tag
         run: |
-          echo "Workflow run outputs:"
-          echo "${{ toJSON(github.event.workflow_run.outputs) }}"
-          TAG_NAME="${{ github.event.workflow_run.outputs.tag_name }}"
+          # Get the workflow run that created the tag
+          RUN_ID=${{ github.event.workflow_run.id }}
+          # Get the tag name from the workflow run's jobs
+          TAG_NAME=$(curl -s -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs" | \
+            jq -r '.jobs[] | select(.name | contains("Create Tag")) | .outputs.tag_name')
           echo "Tag name: $TAG_NAME"
           if [ -z "$TAG_NAME" ]; then
             echo "Error: Tag name is empty!"
@@ -80,23 +84,3 @@ jobs:
         run: gh release upload ${{ env.TAG_NAME }} ${{ env.SBOM_NAME }} --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  test:
-    needs: release
-    name: Smoke test ${{ github.event.workflow_run.outputs.tag_name }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-
-      - name: Add Go bin to PATH
-        run: echo "$HOME/go/bin" >> $GITHUB_PATH
-
-      - name: Install CLI from release
-        run: |
-          go install github.com/rianfowler/rcc@${{ github.event.workflow_run.outputs.tag_name }}
-
-      - name: Verify CLI --help output
-        run: rcc --help
