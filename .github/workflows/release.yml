@@ -23,11 +23,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Get Tag Name
         id: get_tag
         run: |
@@ -40,6 +35,12 @@ jobs:
             exit 1
           fi
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.TAG_NAME }}
 
       - name: Setup Go
         uses: actions/setup-go@v4
@@ -61,7 +62,7 @@ jobs:
           GPG_FINGERPRINT_OLD: ${{ env.GPG_FINGERPRINT }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
         with:
-          args: release --skip=docker,homebrew
+          args: release --skip=docker,homebrew --rm-dist
 
       - name: Generate SPDX SBOM
         uses: anchore/sbom-action@v0
