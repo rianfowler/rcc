@@ -48,11 +48,15 @@ func runPackBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get absolute path: %v", err)
 	}
 
-	// Initialize Docker client
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	// Initialize Docker client with specific API version
+	cli, err := client.NewClientWithOpts(
+		client.FromEnv,
+		client.WithVersion("1.48"),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create Docker client: %v", err)
 	}
+	defer cli.Close()
 
 	// Pull the pack image if not available
 	imageName := "buildpacksio/pack:latest"
@@ -76,6 +80,7 @@ func runPackBuild(cmd *cobra.Command, args []string) error {
 	args = []string{"build", name}
 	args = append(args, "--path", "/workspace")
 	args = append(args, "--builder", builder)
+	args = append(args, "--creation-time", "now")
 
 	// Add environment variables
 	for _, env := range envVars {
