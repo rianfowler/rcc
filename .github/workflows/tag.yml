@@ -66,6 +66,8 @@ jobs:
           echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
 
   create_tag:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     name: Create Tag ${{ needs.version.outputs.version }}
     needs: version
