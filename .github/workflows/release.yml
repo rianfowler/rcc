@@ -28,6 +28,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Get Tag Name
+        id: get_tag
+        run: |
+          TAG_NAME=${{ github.event.workflow_run.outputs.tag_name }}
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -63,13 +69,13 @@ jobs:
           sbom: ${{ env.SBOM_NAME }}
 
       - name: Upload SBOM to Release
-        run: gh release upload ${{ github.event.workflow_run.head_branch }} ${{ env.SBOM_NAME }} --clobber
+        run: gh release upload ${{ env.TAG_NAME }} ${{ env.SBOM_NAME }} --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     needs: release
-    name: Smoke test ${{ github.event.workflow_run.head_branch }}
+    name: Smoke test ${{ env.TAG_NAME }}
     runs-on: ubuntu-latest
     steps:
       - name: Setup Go
@@ -82,7 +88,7 @@ jobs:
 
       - name: Install CLI from release
         run: |
-          go install github.com/rianfowler/rcc@${{ github.event.workflow_run.head_branch }}
+          go install github.com/rianfowler/rcc@${{ env.TAG_NAME }}
 
       - name: Verify CLI --help output
         run: rcc --help

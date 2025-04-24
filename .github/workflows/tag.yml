@@ -71,6 +71,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Create Tag ${{ needs.version.outputs.version }}
     needs: version
+    outputs:
+      tag_name: ${{ needs.version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -78,6 +80,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create Tag
+        id: create_tag
         run: |
           COMMIT="${{ github.event.inputs.commit }}"
           if [ -z "$COMMIT" ]; then
