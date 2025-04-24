@@ -68,41 +68,40 @@ builds:
     binary: rcc.exe
     env:
       - CGO_ENABLED=0
+# dockers:
+#   - image_templates:
+#       - "rianfowler/rcc:{{ .Tag }}"
+#       - "rianfowler/rcc:latest"
+#     dockerfile: Dockerfile
 
-dockers:
-  - image_templates:
-      - "rianfowler/rcc:{{ .Tag }}"
-      - "rianfowler/rcc:latest"
-    dockerfile: Dockerfile
-
-signs:
-  - artifacts: checksum
-    cmd: gpg2
-    args:
-      - "--batch"
-      - "-u"
-      - "{{ .Env.GPG_FINGERPRINT }}"
-      - "--output"
-      - "${signature}"
-      - "--detach-sign"
-      - "${artifact}"
-brews:
-  - name: rcc
-    description: "A CLI tool for doing X, Y, and Z."
-    homepage: "https://github.com/rianfowler/rcc"
-    license: "MIT"
-    test: |
-      system "#{bin}/rcc", "--help"
-    commit_author:
-      name: "goreleaserbot"
-      email: "bot@goreleaser.com"
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
-    directory: Formula
-    repository:
-      owner: rianfowler
-      name: homebrew-rcc
-      branch: main
-      token: "{{ .Env.GITHUB_PERSONAL_AUTH_TOKEN }}"
-      pull_request:
-        enabled: true
-        draft: true
+# signs:
+#   - artifacts: checksum
+#     cmd: gpg2
+#     args:
+#       - "--batch"
+#       - "-u"
+#       - "{{ .Env.GPG_FINGERPRINT }}"
+#       - "--output"
+#       - "${signature}"
+#       - "--detach-sign"
+#       - "${artifact}"
+# brews:
+#   - name: rcc
+#     description: "A CLI tool for doing X, Y, and Z."
+#     homepage: "https://github.com/rianfowler/rcc"
+#     license: "MIT"
+#     test: |
+#       system "#{bin}/rcc", "--help"
+#     commit_author:
+#       name: "goreleaserbot"
+#       email: "bot@goreleaser.com"
+#     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+#     directory: Formula
+#     repository:
+#       owner: rianfowler
+#       name: homebrew-rcc
+#       branch: main
+#       token: "{{ .Env.GITHUB_PERSONAL_AUTH_TOKEN }}"
+#       pull_request:
+#         enabled: true
+#         draft: true
