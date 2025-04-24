@@ -86,5 +86,8 @@ jobs:
           if [ -z "$COMMIT" ]; then
             COMMIT=$(git rev-parse HEAD)
           fi
-          git tag ${{ needs.version.outputs.version }} $COMMIT
-          git push origin ${{ needs.version.outputs.version }}
+          TAG_NAME="${{ needs.version.outputs.version }}"
+          echo "Creating tag: $TAG_NAME"
+          git tag $TAG_NAME $COMMIT
+          git push origin $TAG_NAME
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
