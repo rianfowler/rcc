@@ -47,27 +47,27 @@ builds:
     env:
       - CGO_ENABLED=0
 
-  # Build for Windows AMD64
-  - id: windows_amd64
-    main: main.go
-    goos:
-      - windows
-    goarch:
-      - amd64
-    binary: rcc.exe
-    env:
-      - CGO_ENABLED=0
+  # # Build for Windows AMD64
+  # - id: windows_amd64
+  #   main: main.go
+  #   goos:
+  #     - windows
+  #   goarch:
+  #     - amd64
+  #   binary: rcc.exe
+  #   env:
+  #     - CGO_ENABLED=0
 
-  # Build for Windows ARM (Windows on ARM64)
-  - id: windows_arm64
-    main: main.go
-    goos:
-      - windows
-    goarch:
-      - arm64
-    binary: rcc.exe
-    env:
-      - CGO_ENABLED=0
+  # # Build for Windows ARM (Windows on ARM64)
+  # - id: windows_arm64
+  #   main: main.go
+  #   goos:
+  #     - windows
+  #   goarch:
+  #     - arm64
+  #   binary: rcc.exe
+  #   env:
+  #     - CGO_ENABLED=0
 # dockers:
 #   - image_templates:
 #       - "rianfowler/rcc:{{ .Tag }}"
