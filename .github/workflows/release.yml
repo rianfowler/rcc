@@ -122,7 +122,7 @@ jobs:
           GPG_FINGERPRINT_OLD: ${{ env.GPG_FINGERPRINT }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
         with:
-          args: release --skip-docker --skip-homebrew
+          args: release --skip=docker,homebrew
 
       - name: Generate SPDX SBOM
         uses: anchore/sbom-action@v0
