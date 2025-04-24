@@ -8,12 +8,9 @@ env:
   GPG_FINGERPRINT: B3596D99AED95A4831F8E9A1092017BA1C395379
 
 on:
-  workflow_run:
-    workflows: ["Tag"]
-    types:
-      - completed
-    branches:
-      - main
+  push:
+    tags:
+      - 'v*'  # Triggers on any version tag
 
 jobs:
   release:
@@ -21,30 +18,12 @@ jobs:
       actions: read
       contents: write
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Get Tag Name
-        id: get_tag
-        run: |
-          # Get the workflow run that created the tag
-          RUN_ID=${{ github.event.workflow_run.id }}
-          # Get the tag name from the workflow run's jobs
-          TAG_NAME=$(curl -s -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs" | \
-            jq -r '.jobs[] | select(.name | contains("Create Tag")) | .outputs.tag_name')
-          echo "Tag name: $TAG_NAME"
-          if [ -z "$TAG_NAME" ]; then
-            echo "Error: Tag name is empty!"
-            exit 1
-          fi
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ env.TAG_NAME }}
+          ref: ${{ github.ref_name }}
 
       - name: Setup Go
         uses: actions/setup-go@v4
@@ -81,6 +60,6 @@ jobs:
           sbom: ${{ env.SBOM_NAME }}
 
       - name: Upload SBOM to Release
-        run: gh release upload ${{ env.TAG_NAME }} ${{ env.SBOM_NAME }} --clobber
+        run: gh release upload ${{ github.ref_name }} ${{ env.SBOM_NAME }} --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
